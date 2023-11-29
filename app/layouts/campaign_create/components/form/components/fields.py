@@ -23,7 +23,7 @@ def render():
 
     st.text_area(
         key="campaign_description_input",
-        label="Campaign Description",
+        label="Campaign Description (Optional)",
     )
 
     # st.date_input(

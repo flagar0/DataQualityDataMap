@@ -1,4 +1,4 @@
-import layouts.login
+import layouts.data_upload
 import streamlit as st
 import streamlit_antd_components as sac
 
@@ -18,13 +18,4 @@ if st.button("reset"):
 
     # config.session_state.campanha.reset()
 
-escolha = sac.segmented(
-    items=[
-        sac.SegmentedItem(label="Create"),
-        sac.SegmentedItem(label="Manage"),
-        sac.SegmentedItem(label="Delete", disabled=True),
-    ],
-)
-
-
-layouts.login.render()
+layouts.data_upload.render()

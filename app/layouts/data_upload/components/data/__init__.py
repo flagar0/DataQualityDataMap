@@ -1,8 +1,8 @@
 import streamlit as st
-from .components import load
+from .components import upload
 
 
 def render():
-    load.render()
+    upload.render()
     # with st.form(key="form_campaign_create"):
     #     load.render()

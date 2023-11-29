@@ -18,3 +18,6 @@ def exec():
     if flag_required:
         st.error(body=f"Required fields missing: {flag_required}")
         return False
+
+    else:
+        return True

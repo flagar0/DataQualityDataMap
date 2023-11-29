@@ -1,7 +1,10 @@
 import streamlit as st
+from config.auth import Auth
 
 
 def exec():
-    st.session_state.auth.is_authenticated = True
-    st.session_state.auth.user = st.session_state.auth_email_input
+    auth: Auth = st.session_state.auth
+    auth.is_authenticated = True
+    auth.user = st.session_state["auth_email_input"]
+
     st.success(body="Sucessfull Logged")

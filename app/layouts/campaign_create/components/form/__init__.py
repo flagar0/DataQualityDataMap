@@ -2,7 +2,6 @@ import streamlit as st
 from .components import fields
 from .components import validate
 from .components import submit
-import asyncio
 
 
 def render():
@@ -10,7 +9,7 @@ def render():
         fields.render()
 
         if st.form_submit_button(label="Submit"):
-            submit.exec()
+            # submit.exec()
             flag = validate.exec()
             if flag:
                 submit.exec()

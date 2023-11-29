@@ -10,8 +10,11 @@ def exec():
         flag_required.append("Campaign Name")
 
     if st.session_state["campaign_dates_input"] == [None, None]:
-        return flag_required.append("Campain dates")
+        return flag_required.append("Campaing dates")
 
     if flag_required:
         st.error(body=f"Required fields missing: {flag_required}")
         return False
+
+    else:
+        return True
