@@ -7,7 +7,7 @@ import config.db.mongo
 
 import config.auth
 
-config.auth.init()
+config.auth.init() # Login
 
 config.db.mongo.init()
 
@@ -33,13 +33,12 @@ escolha = sac.segmented(
     ],
 )
 
-match escolha:
-    case "Create":
-        layouts.campaign_create.render()
-    case "Edit":
-        layouts.campaign_edit.render()
-    case "Manage":
-        layouts.campaign_manage.render()
-        # raise Exception("Opcao invalida")
-    case _:
-        raise Exception("Opcao invalida")
+if(escolha == "Create"):
+    layouts.campaign_create.render()
+elif(escolha == "Edit"):
+    layouts.campaign_edit.render()
+elif(escolha == "Manage"):
+    layouts.campaign_manage.render()
+    # raise Exception("Opcao invalida")
+else:
+    raise Exception("Opcao invalida")

@@ -13,5 +13,5 @@ def render():
             if flag:
                 submit.exec()
                 with st.spinner(text="Please wait..."):
-                    sleep(2)
+                    sleep(1.2)
                     st.rerun()

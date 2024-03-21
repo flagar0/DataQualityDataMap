@@ -1,5 +1,5 @@
 import streamlit as st
-from config.auth import Auth
+#from config.auth import Auth
 
 
 def exec():

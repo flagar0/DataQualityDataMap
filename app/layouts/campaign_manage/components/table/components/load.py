@@ -112,31 +112,31 @@ def render():
             ],
         )
 
-        match escolha:
-            case "Add Data":
-                uploaded_file = st.file_uploader("Choose a CSV file", type=["csv"])
-                if uploaded_file is not None:
-                    st.info("File uploaded successfully!")
+        if(escolha=="Add Data"):
+            uploaded_file = st.file_uploader("Choose a CSV file", type=["csv"])
+            if uploaded_file is not None:
+                st.info("File uploaded successfully!")
 
-                    df = pd.read_csv(uploaded_file)
+                df = pd.read_csv(uploaded_file)
 
-                    st.subheader("Data Preview")
-                    st.dataframe(df)
+                st.subheader("Data Preview")
+                st.dataframe(df)
 
-                    if selected_campaign:
-                        if stb.button("Submit data", key="btn_data"):
-                            number_of_collections = mongoimport(
+                if selected_campaign:
+                    if stb.button("Submit data", key="btn_data"):
+                        number_of_collections = mongoimport(
                                 df,
                                 "newbase",
                                 # "newcollection",
                                 selected_campaign.collection_id,
                             )
-                            st.success(
+                        st.success(
                                 f"Data Added Successfully to Campaign {selected_campaign.name}! It now has {number_of_collections} documents associated with it"
                             )
-                            sleep(2)
-                            st.rerun()
-            case "Add Data Quality Report":
+                        sleep(2)
+                        st.rerun()
+            elif(escolha=="Add Data Quality Report"):
                 pass
-            case _:
+            else:
                 raise Exception("Invalid Option")
+

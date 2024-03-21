@@ -1,23 +1,12 @@
-import requests
-import json
 import streamlit as st
 import datetime
 import pandas as pd
-import utils.ibge
-import components.location.state_city
 import config.init_state
 import uuid
 #from streamlit import _RerunData, _RerunException
-from streamlit.source_util import get_pages
 from streamlit_extras.switch_page_button import switch_page
 
-import calendar  # Core Python Module
-import plotly.graph_objects as go  # pip install plotly
-from streamlit_option_menu import option_menu  # pip install streamlit-option-menu
-
-import database as db  # local import
-
-
+import database as db
 
 
 def main():

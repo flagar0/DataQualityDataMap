@@ -8,7 +8,7 @@ def render():
         label="Campaign Name",
     )
 
-    next_year = 2024
+    next_year = 2025
     jan_1 = datetime.date(2015, 1, 1)
     dec_31 = datetime.date(next_year, 12, 31)
 
