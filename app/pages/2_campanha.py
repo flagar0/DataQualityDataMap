@@ -1,6 +1,7 @@
 import layouts.campaign_create
 import layouts.campaign_edit
 import layouts.campaign_manage
+import layouts.campaign_view
 import streamlit as st
 import streamlit_antd_components as sac
 import config.db.mongo
@@ -30,6 +31,7 @@ escolha = sac.segmented(
         sac.SegmentedItem(label="Create"),
         sac.SegmentedItem(label="Edit"),
         sac.SegmentedItem(label="Manage"),
+        sac.SegmentedItem(label="View"),
     ],
 )
 
@@ -39,6 +41,7 @@ elif(escolha == "Edit"):
     layouts.campaign_edit.render()
 elif(escolha == "Manage"):
     layouts.campaign_manage.render()
-    # raise Exception("Opcao invalida")
+elif(escolha == "View"):
+    layouts.campaign_view.render()
 else:
     raise Exception("Opcao invalida")
