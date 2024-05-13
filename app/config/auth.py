@@ -1,6 +1,6 @@
 import streamlit as st
 import layouts.login
-
+projection={'_id': False}
 
 class Auth:
     def __init__(self):
@@ -20,3 +20,6 @@ def init():
     else:
         with st.sidebar:
             st.markdown(body=f"**Hello {st.session_state.auth.user}**")
+
+    if "x_disabled" not in st.session_state:
+        st.session_state.x_disabled = False

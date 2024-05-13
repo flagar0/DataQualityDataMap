@@ -9,35 +9,12 @@ import uuid
 
 import bunnet as bn
 
-# class Task(Document):
-#     content: str = Field(max_lenght=200)
-#     is_complete: bool = Field(default=False)
-
-
-# class Task(Document):
-#     content: str = Field(max_lenght=200)
-#     is_complete: bool = Field(default=False)
-
-
-# class Category(BaseModel):
-#     name: str
-#     description: str
-
-
-# class Campaign(Document):
-#     name: str  # You can use normal types just like in pydantic
-#     description: Optional[str] = None
-#     date: str  # You can also specify that a field should correspond to an index
-
-
 # This is an asynchronous example, so we will access it from an async function
 def insert():
     client = st.session_state.mongo_client
 
     bn.init_bunnet(database=client.newbase, document_models=[Campaign])
     user = st.session_state.auth.user
-    # # Beanie uses Motor async client under the hood
-    # client = AsyncIOMotorClient("mongodb://localhost:27017")
     collectionname = "".join(
         e for e in str(st.session_state["campaign_name_input"]) if e.isalnum()
     )
