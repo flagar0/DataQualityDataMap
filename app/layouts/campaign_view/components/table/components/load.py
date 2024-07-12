@@ -41,7 +41,7 @@ def mongoexport(df, db_name, coll_name): # USANDO PYMONGO
     client = st.session_state.mongo_client
     db = client[db_name]
     coll = db[coll_name]
-    return pd.DataFrame(list(coll.find(projection={'_id': False},limit=10000))) ## tirar o _id e limita para nao travar
+    return pd.DataFrame(list(coll.find(projection={'_id': False}))) ## tirar o _id e limita para nao travar
 
 def delete_campaign(delete):
     client = st.session_state.mongo_client
@@ -174,6 +174,14 @@ def render():
             elif(escolha == "Data Timeline"):
                 #Data timeline
                 st.subheader("Timeline")
+                st.markdown(
+                    '<div style="display: block ruby;"> <div style="background-color: green; width: 15px; height: 15px; padding-right:2px;"></div> Ok </div>'
+                    '<div style="display: block ruby;"> <div style="background-color: red; width: 15px; height: 15px; padding-right:2px;"></div> Missing </div>'
+                    '<div style="display: block ruby;"> <div style="background-color: #FFFF00; width: 15px; height: 15px; padding-right:2px;"></div> Suspect </div>'
+                    '<div style="display: block ruby;"> <div style="background-color: #F3F3F3; width: 15px; height: 15px; padding-right:2px;"></div> Note </div>'
+                    '<div style="display: block ruby;"> <div style="background-color: black; width: 15px; height: 15px; padding-right:2px;"></div> Incorrect </div>',
+                    unsafe_allow_html=True
+                )
                 dq = get_campaign_dq("newbase", selected_campaign.collection_id)
                 dq = dq["data"][0]
 
@@ -183,13 +191,23 @@ def render():
                     items.append((g))
                 for r in dq[analise]["red"]:
                     items.append((r))
+                for y in dq[analise]["yellow"]:
+                    items.append(y)
+                for w in dq[analise]["white"]:
+                    items.append(w)
+                for b in dq[analise]["black"]:
+                    items.append(b)
 
                 timeline = st_timeline(items, groups=[], options={
                     "snap": None,
                     "stack": False,
                     "selectable": False,
                 })
-
+                if (dq[analise]["note"] != None):
+                    st.markdown(
+                        f'<div style="display: block ruby;"> <div style="background-color: #F3F3F3; width: 15px; height: 15px; padding-right:2px;"></div> Note: {dq[analise]["note"]}</div>',
+                        unsafe_allow_html=True
+                    )
                 #st.subheader("Selected item")
                 #st.write(timeline)
                 #fim data timeline

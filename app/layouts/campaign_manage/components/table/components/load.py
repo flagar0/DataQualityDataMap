@@ -3,13 +3,12 @@ import pandas as pd
 import pymongo
 import datetime
 import config.db.mongo
-from schemas import Campaign
+from schemas import Campaign,Dataquality,Headers
 import json
 import xarray # INSTALAR NETCDF4, SPICY
 import streamlit_antd_components as sac
-from schemas import Dataquality
 import bunnet as bn
-
+from streamlit_timeline import st_timeline
 from time import sleep
 
 from streamlit_extras import stateful_button as stb
@@ -17,14 +16,15 @@ from streamlit_extras import stateful_button as stb
 user_id = "a"
 
 colors = {
-        'Amarelo': '#FFFF00',
-        'Branco': '#FFFFFF',
-        'Preto': '#000000'
+        'yellow': '#FFFF00',
+        'white': '#F3F3F3',
+        'black': '#000000'
     }
 
 next_year = 2024
-jan_1 = datetime.date(2015, 1, 1)
+jan_1 = datetime.date(2012, 1, 1)
 dec_31 = datetime.date(next_year, 12, 31)
+
 
 def get_campaigns_by_user(user):
     client = st.session_state.mongo_client
@@ -107,25 +107,50 @@ def generate_dataquality(df):
             green.append({"start": str(old_time), "end": str(df['time_offset'][len(df) - 1]), "style": "background-color: green;"})
         else:
             red.append({"start": str(first_red), "end": str(df['time_offset'][len(df) - 1]), "style": "background-color: red;"})
-        analysis.update({header:{"green":green,"red":red}})
+        analysis.update({header:{"green":green,"red":red,"yellow":[],"white":[],"black":[],"note":None}})
     return analysis
 
 def upload_dataquality(data_quality,selected_campaign):
-    client = st.session_state.mongo_client
-    bn.init_bunnet(database=client.newbase, document_models=[Dataquality])
-    user = st.session_state.auth.user
-    dq = Dataquality(
+    try:
+        client = st.session_state.mongo_client
+        bn.init_bunnet(database=client.newbase, document_models=[Dataquality])
+        user = st.session_state.auth.user
+        dq = Dataquality(
+                name=selected_campaign.name,
+                user_id=selected_campaign.user_id,
+                collection_id=selected_campaign.collection_id,
+                data=data_quality
+            )
+        dq.insert()
+        return True #BaseException as e
+    except:
+        return False
+
+def upload_headers(variables,columns,selected_campaign):
+    headers = {}
+    for i in columns:
+        headers.update({i: str(variables.mapping[i].attrs)})
+
+    try:
+        client = st.session_state.mongo_client
+        bn.init_bunnet(database=client.newbase, document_models=[Headers.Headers])
+        user = st.session_state.auth.user
+        dq = Headers.Headers(
             name=selected_campaign.name,
             user_id=selected_campaign.user_id,
             collection_id=selected_campaign.collection_id,
-            data=data_quality
+            header=headers
         )
-    dq.insert()
-    return True #BaseException as e
+        dq.insert()
+        return True
+    except BaseException as e:
+        print(e)
+        return False
+
 
 def render():
     st.session_state.table_data = st.session_state.get("table_data", [])
-
+    if 'data_quality' not in st.session_state :  st.session_state.data_quality = []
     # TO-DO inicializar table_data com None
     # TO-DO trocar nome table_data para campaing list
 
@@ -163,50 +188,49 @@ def render():
             format_func=lambda x: x.name
         )
 
+        uploaded_file = st.file_uploader("Choose a CSV file",accept_multiple_files=True, type=["csv", "tsv", "cdf", ".nc"])
+        if len(uploaded_file) != 0:
+            st.info("File uploaded successfully!")
+            print(uploaded_file[0].type)
+
+            #Possivel erro: colocar mais de um tipo de arquivo juntos
+            if (uploaded_file[0].type == "text\csv"):  # .csv
+                df = pd.concat((pd.read_csv(f) for f in uploaded_file), ignore_index=True)
+
+            elif (uploaded_file[0].type == "text/tab-separated-values"):  # .tsv
+                df = pd.concat((pd.read_csv(f, sep='\t') for f in uploaded_file), ignore_index=True)
+
+            elif (uploaded_file[0].type == "application/x-netcdf"):  # .cdf
+                variables = xarray.open_dataset(uploaded_file[0]).variables # pega as informacoes de cabecalho do primeiro
+                df = pd.concat((xarray.open_dataset(f).to_pandas() for f in uploaded_file), ignore_index=True)#xarray.open_dataset(uploaded_file).to_pandas()
+
+        st.divider()  # ------------------
         escolha = sac.segmented(
             items=[
-                sac.SegmentedItem(label="Add Data"),
+                sac.SegmentedItem(label="Preview Data"),
                 sac.SegmentedItem(label="Add Data Quality Report"),
-            ],
-        )
+            ],)
 
-        if(escolha=="Add Data"):
-            uploaded_file = st.file_uploader("Choose a CSV file", type=["csv","tsv","cdf",".nc"])
-            if uploaded_file is not None:
-                st.info("File uploaded successfully!")
-                print(uploaded_file.type)
-                if(uploaded_file.type=="text\csv"): #.csv
-                    df = pd.read_csv(uploaded_file)
 
-                elif(uploaded_file.type=="text/tab-separated-values"):#.tsv
-                    df = pd.read_csv(uploaded_file,sep='\t')
 
-                elif(uploaded_file.type=="application/x-netcdf"):#.cdf
-                    df =  xarray.open_dataset(uploaded_file).to_pandas()
-
-                st.subheader("Data Preview")
-                st.write(df.head(10))
-
-                # Data Quality
-                data_quality = generate_dataquality(df)
-
-                if selected_campaign:
-                    if stb.button("Submit data", key="btn_data"):
-                        # number_of_collections = mongoimport(
-                        #         df,
-                        #         "newbase",
-                        #         # "newcollection",
-                        #         selected_campaign.collection_id,
-                        #     )
-                        print(upload_dataquality(data_quality, selected_campaign))
-                        # st.success(
-                        #         f"Data Added Successfully to Campaign {selected_campaign.name}! It now has {number_of_collections} documents associated with it"
-                        #     )
-                        sleep(2)
-                        #st.rerun()
+        if(escolha=="Preview Data"):
+            if(uploaded_file is not None): st.write(df.head(5))
+            if (uploaded_file is not None): st.write(df.tail(5))
 
         elif(escolha=="Add Data Quality Report"):
+            st.markdown(
+                '<div style="display: block ruby;"> <div style="background-color: #FFFF00; width: 15px; height: 15px; padding-right:2px;"></div> Suspect </div>'
+                '<div style="display: block ruby;"> <div style="background-color: #F3F3F3; width: 15px; height: 15px; padding-right:2px;"></div> Note </div>'
+                '<div style="display: block ruby;"> <div style="background-color: black; width: 15px; height: 15px; padding-right:2px;"></div> Incorrect </div>',
+                unsafe_allow_html=True
+            )
             selected_color = st.selectbox("Select a quality level", list(colors.keys()))
+            # Data Quality
+
+            if st.session_state.data_quality == [] :
+                st.session_state.data_quality = generate_dataquality(df)
+                print("salvei por cima")
+            data_quality= st.session_state.data_quality
 
             if selected_color:
                 st.markdown(
@@ -214,13 +238,106 @@ def render():
                     unsafe_allow_html=True
                 )
             st.write(f'Selected quality: {selected_color}')
-            d = st.date_input(
+
+            if(selected_color == "white"):
+                note_disabled = False
+            else:
+                note_disabled = True
+            note = st.text_area(label="Note",disabled=note_disabled )
+            date = st.date_input(
                 "Select the period of data collection",
                 (jan_1, datetime.date(next_year, 1, 7)),
                 jan_1,
                 dec_31,
-                format="MM.DD.YYYY",
+                format="MM.DD.YYYY",# 2014-09-01 00:12:32
             )
-        else:
-            raise Exception("Invalid Option")
+            hour_min = st.time_input("Start time",step=60)
+            hour_max = st.time_input("End time", step=60)
 
+            start_datetime = datetime.datetime.combine(date[0], hour_min)
+            end_datetime = datetime.datetime.combine(date[1],hour_max)
+
+
+            st.divider()#------------------
+            st.subheader("Preview Timeline")
+
+            if (data_quality !=None):
+                analise = st.selectbox("Select Data", options=list(data_quality))
+                items = []
+                for g in data_quality[analise]["green"]:  # verdes
+                    items.append(g)
+                for r in data_quality[analise]["red"]:
+                    items.append(r)
+                for y in data_quality[analise]["yellow"]:
+                    items.append(y)
+                for w in data_quality[analise]["white"]:
+                    items.append(w)
+                for b in data_quality[analise]["black"]:
+                    items.append(b)
+
+
+
+                items_new = items
+                col_prev, col_add = st.columns(2)
+                bool_add_btn = True
+                with col_prev:
+                    if (st.button("Preview")):  # "style": "background-color: selected color;"
+                        items_new.append({"start": str(start_datetime), "end": str(end_datetime), "style": "background-color: "+colors[selected_color]+";"})
+                        bool_add_btn = False
+                with col_add:
+                    if (st.button("Add",disabled=bool_add_btn)):
+                        data_quality[analise][selected_color].append({"start": str(start_datetime), "end": str(end_datetime), "style": "background-color: "+colors[selected_color]+";"})
+                        items_new.append({"start": str(start_datetime), "end": str(end_datetime),
+                                          "style": "background-color: " + colors[selected_color] + ";"})
+                        if(note != ""):
+                            data_quality[analise]["note"] = note
+                        st.session_state.data_quality = data_quality
+                if (st.button("Clear")):
+                    bool_add_btn = True
+
+                timeline = st_timeline(items_new, groups=[], options={
+                "snap": None,
+                "stack": False,
+                "selectable": False,
+                })
+                if (note != ""):
+                    st.markdown(
+                        f'<div style="diplay: -webkit-box;"> <div style="background-color: #FFFF; width: 15px; height: 15px; padding-right:2px;"></div> Note: {note}</div>',
+                        unsafe_allow_html=True
+                    )
+
+            else:
+                st.warning("Error: You need add a data")
+        else:
+            pass
+            #raise Exception("Invalid Option")
+        if selected_campaign:
+            if stb.button("Submit data", key="btn_data"):
+                # number_of_collections = mongoimport(
+                #         df,
+                #         "newbase",
+                #         # "newcollection",
+                #         selected_campaign.collection_id,
+                #     )
+
+                # if upload_dataquality(st.session_state.data_quality, selected_campaign):
+                #     st.success(
+                #         f"Data Quality Added Successfully to Campaign {selected_campaign.name}"
+                #     )
+                #     st.session_state.data_quality = []
+
+                if upload_headers(variables,df.columns,selected_campaign):
+                    st.success(
+                        f"Headers Variables Added Successfully to Campaign {selected_campaign.name}"
+                    )
+                else:
+                    st.error(
+                        f"Error on add headers variables to Campaign {selected_campaign.name}"
+                    )
+
+
+                # st.success(
+                #         f"Data Added Successfully to Campaign {selected_campaign.name}! It now has {number_of_collections} documents associated with it"
+                #     )
+                sleep(2)
+                # st.rerun()
