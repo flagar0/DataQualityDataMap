@@ -3,7 +3,7 @@ from .components import table
 
 
 def render():
-    st.markdown(body="# Administrate campaigns")
+    st.markdown(body="# Edit campaigns")
     st.divider()
 
     table.render()

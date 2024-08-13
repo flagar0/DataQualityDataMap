@@ -83,7 +83,7 @@ def render():
         )
 
         selected_campaign = st.selectbox(
-            label="Select the item for deletion",
+            label="Select the item for edit",
             options=user_campaigns_list,
             index=None,
             format_func=lambda x: x.name
@@ -117,7 +117,15 @@ def render():
                         )
 
             if(escolha =="Delete"):
-                if stb.button("Delete Item", key="btn_delete"):
+                btn_pass = True
+                db_name = st.text_input("Type '"+selected_campaign.name+"' to confirm your action")
+                if db_name == selected_campaign.name:
+                    btn_pass = False
+                else:
+                    st.session_state.btn_delete = False
+                    btn_pass = True
+
+                if stb.button("Delete Item", key="btn_delete",disabled = btn_pass):
                     st.write(
                         "Are you sure? All Data associated with this campaign will be deleted"
                     )

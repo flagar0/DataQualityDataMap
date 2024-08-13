@@ -144,7 +144,11 @@ def render():
                     y_axis = st.selectbox("Select Y-axis", options=df.columns, index=1)
                     st.subheader("Scatter Plot")
                     fig = plt.figure(figsize=(10, 5))
-                    sns.scatterplot(data=df, x=x_axis, y=y_axis)
+                    start_x, end_x = st.select_slider("Select a range for X-axis:",options=df[x_axis],value=(df[x_axis][0],df[x_axis][len(df[x_axis])-1]))
+                    df_mod = df
+                    df_list = list(df[x_axis])
+                    df_mod[x_axis] = df_mod[x_axis][df_list.index(start_x) : df_list.index(end_x)]
+                    sns.scatterplot(data=df_mod, x=x_axis, y=y_axis,s=10)
                     st.pyplot(fig)
                     st.session_state.x_disabled = False
 

@@ -13,7 +13,7 @@ from streamlit_extras.switch_page_button import switch_page
 
 
 #streamlit run /home/flaviomidea/Documents/GitHub/DataQualityDataMap/app.py
-
+#streamlit run "C:\Users\Flavio Midea\source\repos\DataQualityDataMap\app\app.py"
 def main():
     campaign_new_bt = st.button("Create New Campaign")
     campaign_exist_bt = st.button("Administer Existing Campaigns")

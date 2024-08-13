@@ -166,12 +166,12 @@ def render():
         st.session_state.table_data.append((Campaign_name, description, date))
 
     if st.session_state.table_data:
-        df = pd.DataFrame(
+        tables = pd.DataFrame(
             st.session_state.table_data,
             columns=["name", "description", "date"],
         )
         st.dataframe(
-            data=df,
+            data=tables,
             hide_index=True,
             column_order=["name", "description", "date"],
             column_config={
@@ -189,6 +189,7 @@ def render():
         )
 
         uploaded_file = st.file_uploader("Choose a CSV file",accept_multiple_files=True, type=["csv", "tsv", "cdf", ".nc"])
+        df = None
         if len(uploaded_file) != 0:
             st.info("File uploaded successfully!")
             print(uploaded_file[0].type)
@@ -200,7 +201,7 @@ def render():
             elif (uploaded_file[0].type == "text/tab-separated-values"):  # .tsv
                 df = pd.concat((pd.read_csv(f, sep='\t') for f in uploaded_file), ignore_index=True)
 
-            elif (uploaded_file[0].type == "application/x-netcdf"):  # .cdf
+            elif (uploaded_file[0].type == "application/x-netcdf" or uploaded_file[0].type == "application/vnd.wolfram.cdf" ):  # .cdf
                 variables = xarray.open_dataset(uploaded_file[0]).variables # pega as informacoes de cabecalho do primeiro
                 df = pd.concat((xarray.open_dataset(f).to_pandas() for f in uploaded_file), ignore_index=True)#xarray.open_dataset(uploaded_file).to_pandas()
 
@@ -214,8 +215,8 @@ def render():
 
 
         if(escolha=="Preview Data"):
-            if(uploaded_file is not None): st.write(df.head(5))
-            if (uploaded_file is not None): st.write(df.tail(5))
+            if(df is not None ): st.write(df.head(5))
+            if (df is not None): st.write(df.tail(5))
 
         elif(escolha=="Add Data Quality Report"):
             st.markdown(
@@ -313,18 +314,18 @@ def render():
             #raise Exception("Invalid Option")
         if selected_campaign:
             if stb.button("Submit data", key="btn_data"):
-                # number_of_collections = mongoimport(
-                #         df,
-                #         "newbase",
-                #         # "newcollection",
-                #         selected_campaign.collection_id,
-                #     )
+                number_of_collections = mongoimport(
+                        df,
+                        "newbase",
+                        # "newcollection",
+                        selected_campaign.collection_id,
+                    )
 
-                # if upload_dataquality(st.session_state.data_quality, selected_campaign):
-                #     st.success(
-                #         f"Data Quality Added Successfully to Campaign {selected_campaign.name}"
-                #     )
-                #     st.session_state.data_quality = []
+                if upload_dataquality(st.session_state.data_quality, selected_campaign):
+                    st.success(
+                        f"Data Quality Added Successfully to Campaign {selected_campaign.name}"
+                    )
+                    st.session_state.data_quality = []
 
                 if upload_headers(variables,df.columns,selected_campaign):
                     st.success(
@@ -336,8 +337,7 @@ def render():
                     )
 
 
-                # st.success(
-                #         f"Data Added Successfully to Campaign {selected_campaign.name}! It now has {number_of_collections} documents associated with it"
-                #     )
+                st.success(
+                        f"Data Added Successfully to Campaign {selected_campaign.name}! It now has {number_of_collections} documents associated with it"
+                    )
                 sleep(2)
-                # st.rerun()
