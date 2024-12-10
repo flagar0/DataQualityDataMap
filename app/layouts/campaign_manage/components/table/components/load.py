@@ -29,8 +29,8 @@ dec_31 = datetime.date(next_year, 12, 31)
 def get_campaigns_by_user(user):
     client = st.session_state.mongo_client
 
-    bn.init_bunnet(database=client.newbase, document_models=[Campaign])
-    result = Campaign.find_all().to_list()
+    bn.init_bunnet(database=client.info, document_models=[Campaign])
+    result = Campaign.find({"user_id":user}).to_list()
 
     return result
 
@@ -64,7 +64,7 @@ def mongoimport(df, db_name, coll_name):
 def delete_campaign(delete):
     client = st.session_state.mongo_client
 
-    bn.init_bunnet(database=client.newbase, document_models=[Campaign])
+    bn.init_bunnet(database=client.info, document_models=[Campaign])
 
     Campaign.find_one(Campaign.name == delete).delete()
 
@@ -113,8 +113,8 @@ def generate_dataquality(df):
 def upload_dataquality(data_quality,selected_campaign):
     try:
         client = st.session_state.mongo_client
-        bn.init_bunnet(database=client.newbase, document_models=[Dataquality])
         user = st.session_state.auth.user
+        bn.init_bunnet(database=client[user], document_models=[Dataquality])
         dq = Dataquality(
                 name=selected_campaign.name,
                 user_id=selected_campaign.user_id,
@@ -133,8 +133,8 @@ def upload_headers(variables,columns,selected_campaign):
 
     try:
         client = st.session_state.mongo_client
-        bn.init_bunnet(database=client.newbase, document_models=[Headers.Headers])
         user = st.session_state.auth.user
+        bn.init_bunnet(database=client[user], document_models=[Headers.Headers])
         dq = Headers.Headers(
             name=selected_campaign.name,
             user_id=selected_campaign.user_id,
@@ -316,7 +316,7 @@ def render():
             if stb.button("Submit data", key="btn_data"):
                 number_of_collections = mongoimport(
                         df,
-                        "newbase",
+                        user,
                         # "newcollection",
                         selected_campaign.collection_id,
                     )

@@ -13,7 +13,7 @@ import bunnet as bn
 def insert():
     client = st.session_state.mongo_client
 
-    bn.init_bunnet(database=client.newbase, document_models=[Campaign])
+    bn.init_bunnet(database=client.info, document_models=[Campaign])
     user = st.session_state.auth.user
     collectionname = "".join(
         e for e in str(st.session_state["campaign_name_input"]) if e.isalnum()

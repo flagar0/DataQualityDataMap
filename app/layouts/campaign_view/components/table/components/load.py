@@ -27,8 +27,8 @@ sns.set_theme(style="whitegrid") #tema
 def get_campaigns_by_user(user):
     client = st.session_state.mongo_client
 
-    bn.init_bunnet(database=client.newbase, document_models=[Campaign])
-    result = Campaign.find_all().to_list()
+    bn.init_bunnet(database=client.info, document_models=[Campaign])
+    result = Campaign.find({"user_id":user}).to_list()
     return result
 
 def get_plot():
@@ -46,7 +46,7 @@ def mongoexport(df, db_name, coll_name): # USANDO PYMONGO
 def delete_campaign(delete):
     client = st.session_state.mongo_client
 
-    bn.init_bunnet(database=client.newbase, document_models=[Campaign])
+    bn.init_bunnet(database=client.info, document_models=[Campaign])
 
     Campaign.find_one(Campaign.name == delete).delete()
 
@@ -108,7 +108,7 @@ def render():
         )
         if selected_campaign:
             df = mongoexport(df,
-                             "newbase",
+                             user,
                              # "newcollection",
                              selected_campaign.collection_id, )
             if (escolha == "Data View"):
@@ -186,7 +186,7 @@ def render():
                     '<div style="display: block ruby;"> <div style="background-color: black; width: 15px; height: 15px; padding-right:2px;"></div> Incorrect </div>',
                     unsafe_allow_html=True
                 )
-                dq = get_campaign_dq("newbase", selected_campaign.collection_id)
+                dq = get_campaign_dq(user, selected_campaign.collection_id)
                 dq = dq["data"][0]
 
                 analise = st.selectbox("Select Data", options=list(dq))

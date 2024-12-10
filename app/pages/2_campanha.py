@@ -10,16 +10,8 @@ import config.auth
 
 config.auth.init() # Login
 
-config.db.mongo.init()
+#config.db.mongo.init() --------------- TIRAR do # se tiver dando problema
 
-# config.auth.init()
-# import config.db.mongo
-
-# import config.session_state.campanha
-
-
-# config.db.mongo.init()
-# config.session_state.campanha.init()
 
 if st.button("reset"):
     st.success("Reset done")

@@ -21,16 +21,16 @@ user_id = "a"
 
 def get_campaigns_by_user(user):
     client = st.session_state.mongo_client
-
-    bn.init_bunnet(database=client.newbase, document_models=[Campaign])
-    result = Campaign.find_all().to_list()
+    user = st.session_state.auth.user
+    bn.init_bunnet(database=client.info, document_models=[Campaign])
+    result = Campaign.find({"user_id":user}).to_list()
 
     return result
 
 def delete_campaign(delete):
     client = st.session_state.mongo_client
 
-    bn.init_bunnet(database=client.newbase, document_models=[Campaign])
+    bn.init_bunnet(database=client.info, document_models=[Campaign])
 
     Campaign.find_one(Campaign.name == delete).delete()
 
@@ -42,8 +42,8 @@ def get_header(db_name, id):
 
 def upload_header(header,selected_campaign):
     client = st.session_state.mongo_client
-    bn.init_bunnet(database=client.newbase, document_models=[Headers.Headers])
     user = st.session_state.auth.user
+    bn.init_bunnet(database=client[user], document_models=[Headers.Headers])
     dq = Headers.Headers(
             name=selected_campaign.name,
             user_id=selected_campaign.user_id,
@@ -98,7 +98,7 @@ def render():
 
             if (escolha=="Edit Header"):
                 header_list = get_header(
-                             "newbase",
+                             user,
                              # "newcollection",
                              selected_campaign.collection_id)
 
