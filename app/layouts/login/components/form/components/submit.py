@@ -6,14 +6,15 @@ from pymongo.errors import ServerSelectionTimeoutError, OperationFailure
 
 def exec():
     auth: Auth = st.session_state.auth
-    client = MongoClient("mongodb+srv://{user}:{password}@cluster0.hijrd3t.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0".format(user=st.session_state["auth_email_input"], password=st.session_state["auth_pwd_input"]))
+    client = MongoClient("mongodb+srv://{user}:{password}@cluster0.hijrd3t.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0".format(user=st.session_state["auth_email_input"], password=st.session_state["auth_pwd_input"]),timeoutMS=0)
 
     try:
         if client.admin.command('ismaster')['ismaster']:
 
-            if "mongo_client" not in st.session_state:
+            if ("mongo_client" not in st.session_state) or st.session_state.auth.public:
                 st.session_state.mongo_client = client
                 auth.is_authenticated = True
+                st.session_state.auth.public = False
                 auth.user = st.session_state["auth_email_input"]
                 st.success(body="Sucessfull Logged")
 

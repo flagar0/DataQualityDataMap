@@ -8,13 +8,14 @@ class Auth:
         self.is_authenticated = False
         self.token = None
         self.token_expire_datetime = None
+        self.public = False
 
 
 def init():
     if "auth" not in st.session_state:
         st.session_state.auth = Auth()
 
-    if not st.session_state.auth.is_authenticated:
+    if not st.session_state.auth.is_authenticated or st.session_state.auth.public:
         layouts.login.render()
         st.stop()
     else:

@@ -5,7 +5,7 @@ import datetime
 def render():
     st.text_input(
         key="auth_email_input",
-        label="User E-mail",
+        label="Username",
     )
 
     st.text_input(

@@ -14,13 +14,14 @@ from streamlit_extras.switch_page_button import switch_page
 
 #streamlit run /home/flaviomidea/Documents/GitHub/DataQualityDataMap/app.py
 #streamlit run "C:\Users\Flavio Midea\source\repos\DataQualityDataMap\app\app.py"
+
 def main():
-    campaign_new_bt = st.button("Create New Campaign")
-    campaign_exist_bt = st.button("Administer Existing Campaigns")
+    campaign_new_bt = st.button("Login")
+    campaign_exist_bt = st.button("View Public Campaigns")
     if campaign_new_bt:
         switch_page("campanha")
     if campaign_exist_bt:
-        switch_page("AdministerCampaigns")
+        switch_page("ViewCampaigns")
 
 
 

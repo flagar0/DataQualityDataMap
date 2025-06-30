@@ -10,6 +10,7 @@ import streamlit_antd_components as sac
 import bunnet as bn
 from streamlit_timeline import st_timeline
 from time import sleep
+from stqdm import stqdm
 
 from streamlit_extras import stateful_button as stb
 
@@ -54,11 +55,23 @@ def mongoimport(df, db_name, coll_name):
     db = client[db_name]
     coll = db[coll_name]
     # data = pd.read_csv(csv_path)
+    df = df.reset_index() # Retira o index para nao perde-lo
     payload = df.to_dict(orient="records")
+    print("Inserindo na tabela")
+    dez_porcento = int(len(payload)*0.1)
+    num = 0
+    resto = int(len(payload)%0.1)
 
-    # coll.delete_many()
-    coll.insert_many(payload)
-    return coll.estimated_document_count()
+    for i in stqdm(range(dez_porcento,int(len(payload)-resto+1),dez_porcento)):
+        print(num)
+        #result = coll.insert_one(i)
+        result = coll.insert_many(payload[i-dez_porcento:i])
+        print(f"{i-dez_porcento} : {i}")
+        num += dez_porcento
+    if resto != 0:
+        result2 = coll.insert_many(payload[len(payload)-resto:resto])
+        num += resto
+    return num
 
 
 def delete_campaign(delete):
@@ -203,8 +216,11 @@ def render():
 
             elif (uploaded_file[0].type == "application/x-netcdf" or uploaded_file[0].type == "application/vnd.wolfram.cdf" ):  # .cdf
                 variables = xarray.open_dataset(uploaded_file[0]).variables # pega as informacoes de cabecalho do primeiro
-                df = pd.concat((xarray.open_dataset(f).to_pandas() for f in uploaded_file), ignore_index=True)#xarray.open_dataset(uploaded_file).to_pandas()
+                df = pd.concat((xarray.open_dataset(f).to_pandas() for f in uploaded_file))#, ignore_index=True)#xarray.open_dataset(uploaded_file).to_pandas()
 
+        if st.session_state.data_quality == [] and df is not None :
+            st.session_state.data_quality = generate_dataquality(df)
+            print("salvei por cima")
         st.divider()  # ------------------
         escolha = sac.segmented(
             items=[
@@ -228,9 +244,7 @@ def render():
             selected_color = st.selectbox("Select a quality level", list(colors.keys()))
             # Data Quality
 
-            if st.session_state.data_quality == [] :
-                st.session_state.data_quality = generate_dataquality(df)
-                print("salvei por cima")
+
             data_quality= st.session_state.data_quality
 
             if selected_color:
@@ -314,12 +328,7 @@ def render():
             #raise Exception("Invalid Option")
         if selected_campaign:
             if stb.button("Submit data", key="btn_data"):
-                number_of_collections = mongoimport(
-                        df,
-                        user,
-                        # "newcollection",
-                        selected_campaign.collection_id,
-                    )
+
 
                 if upload_dataquality(st.session_state.data_quality, selected_campaign):
                     st.success(
@@ -336,8 +345,13 @@ def render():
                         f"Error on add headers variables to Campaign {selected_campaign.name}"
                     )
 
+                number_of_collections = mongoimport(
+                    df,
+                    user,
+                    # "newcollection",
+                    selected_campaign.collection_id,
+                )
 
                 st.success(
                         f"Data Added Successfully to Campaign {selected_campaign.name}! It now has {number_of_collections} documents associated with it"
                     )
-                sleep(2)

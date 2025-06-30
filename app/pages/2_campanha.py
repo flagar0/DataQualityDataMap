@@ -13,11 +13,6 @@ config.auth.init() # Login
 #config.db.mongo.init() --------------- TIRAR do # se tiver dando problema
 
 
-if st.button("reset"):
-    st.success("Reset done")
-
-    # config.session_state.campanha.reset()
-
 escolha = sac.segmented(
     items=[
         sac.SegmentedItem(label="Create"),

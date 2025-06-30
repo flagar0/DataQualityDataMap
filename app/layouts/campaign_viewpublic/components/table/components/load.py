@@ -24,11 +24,11 @@ from streamlit_extras import stateful_button as stb
 user_id = "a"
 sns.set_theme(style="whitegrid") #tema
 
-def get_campaigns_by_user(user):
+def get_campaigns_by_user():
     client = st.session_state.mongo_client
 
-    bn.init_bunnet(database=client.info, document_models=[Campaign])
-    result = Campaign.find({"user_id":user}).to_list()
+    bn.init_bunnet(database=client.publicAcess, document_models=[Campaign])
+    result = Campaign.find().to_list()
     return result
 
 def get_plot():
@@ -55,7 +55,7 @@ def get_camaign_names(df,x_axis,y_axis):
     return sns.lineplot(data=df, x=x_axis, y=y_axis, markers=True)
 
 
-def get_campaign_dq(db_name, id): # data quality
+def get_campaign_dq(db_name, id): # db_name: newbase
     client = st.session_state.mongo_client
     db = client[db_name]
     coll = db["Dataquality"]
@@ -66,8 +66,8 @@ def render():
     # TO-DO inicializar table_data com None
     # TO-DO trocar nome table_data para campaing list
 
-    user = st.session_state.auth.user
-    user_campaigns_list = get_campaigns_by_user(user)
+    user = "publicAcess"
+    user_campaigns_list = get_campaigns_by_user()
 
     st.session_state.table_data = []
     for campaign in user_campaigns_list:
@@ -94,7 +94,7 @@ def render():
         )
 
         selected_campaign = st.selectbox(
-            label="Select a campaign to manage",
+            label="Select a campaign to view",
             options=user_campaigns_list,
             index=None,
             format_func=lambda x: x.name,
@@ -104,7 +104,6 @@ def render():
             items=[
                 sac.SegmentedItem(label="Data View"),
                 sac.SegmentedItem(label="Data Timeline"),
-                sac.SegmentedItem(label="Download"),
             ],
         )
         if selected_campaign:
@@ -213,10 +212,6 @@ def render():
                         f'<div style="display: block ruby;"> <div style="background-color: #F3F3F3; width: 15px; height: 15px; padding-right:2px;"></div> Note: {dq[analise]["note"]}</div>',
                         unsafe_allow_html=True
                     )
-
-
-            elif (escolha == "Download"):
-                pass
                 #st.subheader("Selected item")
                 #st.write(timeline)
                 #fim data timeline
