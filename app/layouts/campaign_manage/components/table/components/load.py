@@ -11,7 +11,7 @@ import bunnet as bn
 from streamlit_timeline import st_timeline
 from time import sleep
 from stqdm import stqdm
-
+from config.functions import *
 from streamlit_extras import stateful_button as stb
 
 user_id = "a"
@@ -26,14 +26,6 @@ next_year = 2024
 jan_1 = datetime.date(2012, 1, 1)
 dec_31 = datetime.date(next_year, 12, 31)
 
-
-def get_campaigns_by_user(user):
-    client = st.session_state.mongo_client
-
-    bn.init_bunnet(database=client.info, document_models=[Campaign])
-    result = Campaign.find({"user_id":user}).to_list()
-
-    return result
 
 
 # def create_new_campaigncollection(campaign_id):
@@ -74,21 +66,15 @@ def mongoimport(df, db_name, coll_name):
     return num
 
 
-def delete_campaign(delete):
-    client = st.session_state.mongo_client
-
-    bn.init_bunnet(database=client.info, document_models=[Campaign])
-
-    Campaign.find_one(Campaign.name == delete).delete()
-
 def generate_dataquality(df):
     #Colocar explicacao
     #Limpa os cabecalhos - Tira cabecalhos de tempo
     headers = list(df.columns.values)
 
     try:
-        headers.remove('base_time')
-        headers.remove('time_offset')
+        #headers.remove('base_time')
+        #headers.remove('time_offset')
+        headers.remove('time')
     except:
         print("Sem cabecalhos de Tempo!", headers[0])
 
@@ -98,28 +84,28 @@ def generate_dataquality(df):
         isna = pd.isna(df[header])
         green = []
         red = []
-        old_time = df['time_offset'][0]
+        old_time = df['time'][0]
         first_red=None
 
         for i in range(1, len(df) - 1):  # 2014-09-01 00:12:32
             if (isna[i] == True):  # eh nulo
-                if(str(old_time) != str(df['time_offset'][i]) ):
-                    green.append({"start": str(old_time), "end": str(df['time_offset'][i]), "style": "background-color: green;"})
+                if(str(old_time) != str(df['time'][i]) ):
+                    green.append({"start": str(old_time), "end": str(df['time'][i]), "style": "background-color: green;"})
 
                 if(isna[i+1]==True):
-                    if(first_red==None): first_red=df['time_offset'][i]
+                    if(first_red==None): first_red=df['t'][i]
                 else:
                     if(first_red==None):
-                        red.append({"start": str(df['time_offset'][i]), "end": str(df['time_offset'][i + 1]),"style": "background-color: red;"})
+                        red.append({"start": str(df['time'][i]), "end": str(df['time'][i + 1]),"style": "background-color: red;"})
                     else:
-                        red.append({"start": str(first_red), "end": str(df['time_offset'][i + 1]),"style": "background-color: red;"})
+                        red.append({"start": str(first_red), "end": str(df['time'][i + 1]),"style": "background-color: red;"})
                         first_red=None
 
-                old_time = str(df['time_offset'][i + 1])
+                old_time = str(df['time'][i + 1])
         if(first_red==None): # termina com uma verde
-            green.append({"start": str(old_time), "end": str(df['time_offset'][len(df) - 1]), "style": "background-color: green;"})
+            green.append({"start": str(old_time), "end": str(df['time'][len(df) - 1]), "style": "background-color: green;"})
         else:
-            red.append({"start": str(first_red), "end": str(df['time_offset'][len(df) - 1]), "style": "background-color: red;"})
+            red.append({"start": str(first_red), "end": str(df['time'][len(df) - 1]), "style": "background-color: red;"})
         analysis.update({header:{"green":green,"red":red,"yellow":[],"white":[],"black":[],"note":None}})
     return analysis
 
@@ -138,28 +124,6 @@ def upload_dataquality(data_quality,selected_campaign):
         return True #BaseException as e
     except:
         return False
-
-def upload_headers(variables,columns,selected_campaign):
-    headers = {}
-    for i in columns:
-        headers.update({i: str(variables.mapping[i].attrs)})
-
-    try:
-        client = st.session_state.mongo_client
-        user = st.session_state.auth.user
-        bn.init_bunnet(database=client[user], document_models=[Headers.Headers])
-        dq = Headers.Headers(
-            name=selected_campaign.name,
-            user_id=selected_campaign.user_id,
-            collection_id=selected_campaign.collection_id,
-            header=headers
-        )
-        dq.insert()
-        return True
-    except BaseException as e:
-        print(e)
-        return False
-
 
 def render():
     st.session_state.table_data = st.session_state.get("table_data", [])
@@ -201,17 +165,18 @@ def render():
             format_func=lambda x: x.name
         )
 
-        uploaded_file = st.file_uploader("Choose a CSV file",accept_multiple_files=True, type=["csv", "tsv", "cdf", ".nc"])
+        uploaded_file = st.file_uploader("Choose a CSV file",accept_multiple_files=True, type=["csv", "tsv", "cdf", "nc"])
         df = None
+        variables = None
         if len(uploaded_file) != 0:
             st.info("File uploaded successfully!")
-            print(uploaded_file[0].type)
+            print(uploaded_file[0].name[-3:])
 
             #Possivel erro: colocar mais de um tipo de arquivo juntos
-            if (uploaded_file[0].type == "text\csv"):  # .csv
-                df = pd.concat((pd.read_csv(f) for f in uploaded_file), ignore_index=True)
+            if (uploaded_file[0].name[-3:] == "csv"):  # .csv
+                df = pd.concat((pd.read_csv(f, sep=None) for f in uploaded_file), ignore_index=True)
 
-            elif (uploaded_file[0].type == "text/tab-separated-values"):  # .tsv
+            elif (uploaded_file[0].name[-3:] == "tsv"):  # .tsv
                 df = pd.concat((pd.read_csv(f, sep='\t') for f in uploaded_file), ignore_index=True)
 
             elif (uploaded_file[0].type == "application/x-netcdf" or uploaded_file[0].type == "application/vnd.wolfram.cdf" ):  # .cdf
@@ -219,7 +184,11 @@ def render():
                 df = pd.concat((xarray.open_dataset(f).to_pandas() for f in uploaded_file))#, ignore_index=True)#xarray.open_dataset(uploaded_file).to_pandas()
 
         if st.session_state.data_quality == [] and df is not None :
-            st.session_state.data_quality = generate_dataquality(df)
+            try:
+                st.session_state.data_quality = generate_dataquality(df)
+            except (RuntimeError, TypeError, NameError) as e:
+                print("Erro ao gerar dataquality")
+                print(e)
             print("salvei por cima")
         st.divider()  # ------------------
         escolha = sac.segmented(
@@ -231,6 +200,7 @@ def render():
 
 
         if(escolha=="Preview Data"):
+            print(df)
             if(df is not None ): st.write(df.head(5))
             if (df is not None): st.write(df.tail(5))
 

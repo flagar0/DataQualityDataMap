@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import pymongo
-
+import xarray
 import config.db.mongo
 from schemas import Campaign
 import json
@@ -12,8 +12,9 @@ import bunnet as bn
 import matplotlib.pyplot as plt
 import seaborn as sns
 from streamlit_timeline import st_timeline
-
+from config.functions import *
 # from typing import Optional
+from pygwalker.api.streamlit import StreamlitRenderer
 # from bunnet import Document
 
 
@@ -24,42 +25,11 @@ from streamlit_extras import stateful_button as stb
 user_id = "a"
 sns.set_theme(style="whitegrid") #tema
 
-def get_campaigns_by_user(user):
-    client = st.session_state.mongo_client
-
-    bn.init_bunnet(database=client.info, document_models=[Campaign])
-    result = Campaign.find({"user_id":user}).to_list()
-    return result
-
-def get_plot():
-    return
-
-def mongoexport(df, db_name, coll_name): # USANDO PYMONGO
-    """Export a panda file from a mongo colection
-    returns: panda data
-    """
-    client = st.session_state.mongo_client
-    db = client[db_name]
-    coll = db[coll_name]
-    return pd.DataFrame(list(coll.find(projection={'_id': False}))) ## tirar o _id e limita para nao travar
-
-def delete_campaign(delete):
-    client = st.session_state.mongo_client
-
-    bn.init_bunnet(database=client.info, document_models=[Campaign])
-
-    Campaign.find_one(Campaign.name == delete).delete()
-
-def get_camaign_names(df,x_axis,y_axis):
-
-    return sns.lineplot(data=df, x=x_axis, y=y_axis, markers=True)
-
-
-def get_campaign_dq(db_name, id): # data quality
-    client = st.session_state.mongo_client
-    db = client[db_name]
-    coll = db["Dataquality"]
-    return pd.DataFrame(list(coll.find({"collection_id": id},projection={'_id': False}, limit=0)))  ## tirar o _id e limita para nao travar
+@st.cache_resource
+def get_pyg_renderer(dados) -> "StreamlitRenderer":
+    df = dados
+    # If you want to use feature of saving chart config, set `spec_io_mode="rw"`
+    return StreamlitRenderer(df, spec="./gw_config.json", spec_io_mode="rw")
 def render():
     st.session_state.table_data = st.session_state.get("table_data", [])
 
@@ -112,8 +82,17 @@ def render():
                              user,
                              # "newcollection",
                              selected_campaign.collection_id, )
+            try:
+                df["time"] = pd.to_datetime(df["time"])
+                df["timestamp"] = pd.to_datetime(df["timestamp"])
+                df["time_offset"] = pd.to_datetime(df["time_offset"])
+            except:
+                print("Sem coluna de tempo")
+
             if (escolha == "Data View"):
             #Aba view data
+
+
                 st.subheader("Data View")
                 num_rows = st.number_input(
                     "Number of Rows to Display", min_value=1, max_value=10000, value=10
@@ -136,6 +115,7 @@ def render():
                         sac.SegmentedItem(label="Scatter Plot"),
                         sac.SegmentedItem(label="Box Plot"),
                         sac.SegmentedItem(label="Histogram"),
+                        sac.SegmentedItem(label="Interactive")
                     ],
                 )
 
@@ -149,7 +129,8 @@ def render():
                     df_mod = df
                     df_list = list(df[x_axis])
                     df_mod[x_axis] = df_mod[x_axis][df_list.index(start_x) : df_list.index(end_x)]
-                    sns.scatterplot(data=df_mod, x=x_axis, y=y_axis,s=10)
+                    ax = sns.scatterplot(data=df_mod, x=x_axis, y=y_axis,s=10)
+                    ax.tick_params(axis='x', labelrotation=45)
                     st.pyplot(fig)
                     st.session_state.x_disabled = False
 
@@ -159,7 +140,8 @@ def render():
                     y_axis = st.selectbox("Select Y-axis", options=df.columns, index=1)
                     st.subheader("Box Plot")
                     fig2 = plt.figure(figsize=(10, 5))
-                    sns.boxplot(data=df, x=y_axis)
+                    print(df.columns)
+                    sns.boxplot(x=df['n7'])
                     st.pyplot(fig2)
                     st.session_state.x_disabled = True
 
@@ -173,6 +155,10 @@ def render():
                     sns.histplot(data=df, x=y_axis)
                     st.pyplot(fig3)
                     st.session_state.x_disabled = True
+                elif (plots == "Interactive"):
+                    renderer = get_pyg_renderer(df)
+                    renderer.explorer()
+
 
             #Fim data view
 
@@ -216,7 +202,36 @@ def render():
 
 
             elif (escolha == "Download"):
-                pass
-                #st.subheader("Selected item")
-                #st.write(timeline)
-                #fim data timeline
+                df_header = get_header(user, selected_campaign.collection_id)
+
+                df = df.set_index("time")
+                ds = xarray.Dataset(df)
+                separado = ds.groupby("time.date")
+                div_data = list(separado.groups.keys())
+
+                formato = st.radio(
+                    "Choose a format to download:",
+                    [".csv", ".cdf", ".nc"],
+                    key="formato",
+                    horizontal=True
+                )
+                col1, col2 = st.columns(2)
+                with col1:
+                    with st.popover("Time Range"):
+                        start_dia, end_dia = st.select_slider(
+                            "Select a range of download",
+                            options=div_data,
+                            value=(div_data[0],div_data[-1]),
+                        )
+                with col2:
+                    with st.spinner("Processing..."):
+                        zip = download_campaign(ds,df_header,formato,(start_dia, end_dia),user,selected_campaign.name)
+                    st.download_button(
+                        label="📥Download",
+                        data=zip,
+                        file_name=f"{user}_{selected_campaign.name}.zip",
+                        mime="application/zip",
+                    )
+
+
+

@@ -1,15 +1,11 @@
 import streamlit as st
 import pandas as pd
 import datetime
-import config.db.mongo
-from schemas import Campaign,Dataquality,Headers
 from streamlit_timeline import st_timeline
 import streamlit_antd_components as sac
-import bunnet as bn
-import numpy as np
 # from typing import Optional
 # from bunnet import Document
-
+from config.functions import *
 
 from time import sleep
 
@@ -27,66 +23,6 @@ next_year = 2024
 jan_1 = datetime.date(2012, 1, 1)
 dec_31 = datetime.date(next_year, 12, 31)
 
-def get_campaigns_by_user(user):
-    client = st.session_state.mongo_client
-    user = st.session_state.auth.user
-    bn.init_bunnet(database=client.info, document_models=[Campaign])
-    result = Campaign.find({"user_id":user}).to_list()
-
-    return result
-
-def delete_campaign(delete,collection_id):
-    client = st.session_state.mongo_client
-    user = st.session_state.auth.user
-    db = client[user]
-    db.drop_collection(collection_id)
-
-    bn.init_bunnet(database=client[user], document_models=[Headers.Headers])
-    Headers.Headers.find(Headers.Headers.name == delete).delete().run()
-
-    bn.init_bunnet(database=client[user], document_models=[Dataquality])
-    Dataquality.find(Dataquality.name == delete).delete().run()
-
-    bn.init_bunnet(database=client.info, document_models=[Campaign])
-    Campaign.find_one(Campaign.name == delete).delete().run()
-
-def get_header(db_name, id):
-    client = st.session_state.mongo_client
-    db = client[db_name]
-    coll = db["Headers"]
-    return pd.DataFrame(coll.find({"collection_id": id},projection={'_id': False}, limit=0))['header'][0]  ## tirar o _id e limita para nao travar
-
-def upload_header(header,selected_campaign):
-    client = st.session_state.mongo_client
-    user = st.session_state.auth.user
-    bn.init_bunnet(database=client[user], document_models=[Headers.Headers])
-    dq = Headers.Headers(
-            name=selected_campaign.name,
-            user_id=selected_campaign.user_id,
-            collection_id=selected_campaign.collection_id,
-            header=header
-        )
-    dq.insert()
-    return True #BaseException as e
-
-def get_campaign_dq(db_name, id): # data quality
-    client = st.session_state.mongo_client
-    db = client[db_name]
-    coll = db["Dataquality"]
-    return pd.DataFrame(list(coll.find({"collection_id": id},projection={'_id': False}, limit=0)))  ## tirar o _id e limita para nao travar
-
-def update_dataquality(data_quality,selected_campaign):
-    try:
-        client = st.session_state.mongo_client
-        user = st.session_state.auth.user
-        db = client[user]
-        coll = db["Dataquality"]
-        coll.update_one({"collection_id": selected_campaign}, {"$set": {"data": data_quality}})
-        return True #BaseException as e
-    except BaseException as e:
-        print(e)
-        return False
-
 def render():
     st.session_state.table_data = st.session_state.get("table_data", [])
     if 'data_quality' not in st.session_state:  st.session_state.data_quality = []
@@ -95,7 +31,6 @@ def render():
 
     user = st.session_state.auth.user
     user_campaigns_list = get_campaigns_by_user(user)
-
     st.session_state.table_data = []
     for campaign in user_campaigns_list:
         Campaign_name = campaign.name

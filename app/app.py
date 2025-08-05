@@ -13,8 +13,8 @@ from streamlit_extras.switch_page_button import switch_page
 
 
 #streamlit run /home/flaviomidea/Documents/GitHub/DataQualityDataMap/app.py
-#streamlit run "C:\Users\Flavio Midea\source\repos\DataQualityDataMap\app\app.py"
-
+#streamlit run "C:\Users\Flavio Midea\source\repos\DataQualityDataMap\app\app.py" --server.enableXsrfProtection false
+st.set_page_config(layout="wide")
 def main():
     campaign_new_bt = st.button("Login")
     campaign_exist_bt = st.button("View Public Campaigns")
