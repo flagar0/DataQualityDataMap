@@ -171,23 +171,6 @@ MongoClient("mongodb+srv://usuario:senha@cluster.mongodb.net/")
 
 Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes.
 
-## 👨‍💻 Autor
-
-**Gabriel Gandra Prata Gonçalves**
-
-## 📄 Citação
-
-Se você usar este software em sua pesquisa, por favor cite:
-
-```bibtex
-@software{gandra_prata_goncalves_2023,
-  title={digital plataform for data quality control},
-  author={Gandra Prata Gonçalves, Gabriel},
-  year={2023},
-  url={https://github.com/seu-usuario/DataQualityDataMap}
-}
-```
-
 ## 🐛 Problemas Conhecidos
 
 - O arquivo `requirements.txt` pode ter problemas de codificação em alguns sistemas
@@ -200,3 +183,4 @@ Para suporte, abra uma issue no GitHub ou entre em contato através do email: [s
 ---
 
 ⭐ Se este projeto foi útil para você, considere dar uma estrela no repositório!
+
