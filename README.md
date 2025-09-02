@@ -171,16 +171,8 @@ MongoClient("mongodb+srv://usuario:senha@cluster.mongodb.net/")
 
 Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes.
 
-## 🐛 Problemas Conhecidos
-
-- O arquivo `requirements.txt` pode ter problemas de codificação em alguns sistemas
-- Certifique-se de que o MongoDB está acessível antes de executar o aplicativo
-
-## 📞 Suporte
-
-Para suporte, abra uma issue no GitHub ou entre em contato através do email: [seu-email@exemplo.com]
-
 ---
 
 ⭐ Se este projeto foi útil para você, considere dar uma estrela no repositório!
+
 
