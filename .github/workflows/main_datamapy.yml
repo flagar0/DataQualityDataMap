@@ -76,7 +76,7 @@ jobs:
 
       - name: 'Run app'
         run: |
-          source antenv/bin/activate
           cd app
           streamlit run app.py --server.enableXsrfProtection false
           
+
