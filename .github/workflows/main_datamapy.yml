@@ -73,10 +73,6 @@ jobs:
         with:
           app-name: 'datamapy'
           slot-name: 'Production'
+          startup-command: 'cd app; streamlit run app.py --server.address=0.0.0.0 --server.port=8000 --server.enableXsrfProtection false'
 
-      - name: 'Run app'
-        run: |
-          cd app
-          streamlit run app.py --server.enableXsrfProtection false
-          
 
