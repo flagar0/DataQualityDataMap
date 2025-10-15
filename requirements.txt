@@ -20,7 +20,7 @@ seaborn>=0.12.0
 pygwalker>=0.3.0
 
 # Timeline and UI Components
-streamlit-timeline>=0.0.7
+streamlit-vis-timeline>=0.0.7
 stqdm>=0.0.5
 
 # HTTP Requests
@@ -32,3 +32,4 @@ deta>=1.0.0
 # Additional Dependencies
 
 scipy>=1.11.0
+
