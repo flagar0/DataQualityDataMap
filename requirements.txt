@@ -1,4 +1,4 @@
-﻿# Core Framework
+# Core Framework
 streamlit>=1.28.0
 streamlit-extras>=0.3.0
 streamlit-antd-components>=0.1.0
@@ -30,6 +30,8 @@ requests>=2.31.0
 deta>=1.0.0
 
 # Additional Dependencies
-
 scipy>=1.11.0
 
+# Added by import analysis
+debugpy
+streamlit-timeline
