@@ -12,7 +12,6 @@ import ast
 import bunnet as bn
 import matplotlib.pyplot as plt
 import seaborn as sns
-from streamlit_timeline import st_timeline
 import zipfile
 import io
 from pygwalker.api.streamlit import StreamlitRenderer

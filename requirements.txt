@@ -34,4 +34,3 @@ scipy>=1.11.0
 
 # Added by import analysis
 debugpy
-streamlit-timeline
