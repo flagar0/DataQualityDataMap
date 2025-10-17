@@ -1,5 +1,5 @@
 # Core Framework
-streamlit==1.43.0
+streamlit==1.43.2
 streamlit-extras>=0.3.0
 streamlit-antd-components>=0.1.0
 
