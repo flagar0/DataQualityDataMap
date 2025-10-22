@@ -1,6 +1,6 @@
 mkdir -p ~/.streamlit/echo "\
 [general]\n\
-email = \"flaviomidea@datamapy.com\"\n\
+email = \"flaben10@gmail.com\"\n\
 " > ~/.streamlit/credentials.tomlecho "\
 [server]\n\
 headless = true\n\
