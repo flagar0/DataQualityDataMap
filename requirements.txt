@@ -27,7 +27,7 @@ stqdm>=0.0.5
 requests>=2.31.0
 
 # Cloud Database (Optional)
-deta>=1.0.0
+#deta>=1.0.0
 
 # Additional Dependencies
 scipy>=1.11.0

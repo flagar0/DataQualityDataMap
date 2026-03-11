@@ -16,6 +16,8 @@ from streamlit_extras.switch_page_button import switch_page
 #streamlit run "C:\Users\Flavio Midea\source\repos\DataQualityDataMap\app\app.py" --server.enableXsrfProtection false
 #streamlit run app.py --server.enableXsrfProtection false
 
+#streamlit run "C:\Users\flabe\Documents\DataQualityDataMap\app\app.py" --server.enableXsrfProtection false
+
 st.set_page_config(layout="wide")
 def main():
     campaign_new_bt = st.button("Login")
