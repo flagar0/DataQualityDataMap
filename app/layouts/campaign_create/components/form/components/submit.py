@@ -31,6 +31,9 @@ def insert():
         dtf=datetime.combine(date=xdtf, time=datetime.min.time()),
         user_id=str(user),
         collection_id=collectionname + "_" + str(uuid.uuid4()),
+        public = str(st.session_state['is_public_checkbox']),
+        validated = "False"
+
     )
     # And can be inserted into the database
     Campaign1.insert()

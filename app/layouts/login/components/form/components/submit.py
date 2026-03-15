@@ -12,10 +12,21 @@ def exec():
         if client.admin.command('ismaster')['ismaster']:
 
             if ("mongo_client" not in st.session_state) or st.session_state.auth.public:
+
+                user_databases = client.list_database_names()
+                if 'curador' in client.list_database_names():
+                    auth.cargo = "curador"
+                else:
+                    if 'investigador' in client.list_database_names():
+                        auth.cargo = "investigador"
+                    else:
+                        auth.cargo = "padrao"
+
                 st.session_state.mongo_client = client
                 auth.is_authenticated = True
                 st.session_state.auth.public = False
                 auth.user = st.session_state["auth_email_input"]
+
                 st.success(body="Sucessfull Logged")
 
     except OperationFailure:

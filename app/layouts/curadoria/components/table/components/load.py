@@ -29,8 +29,8 @@ def render():
 
 
 
-    user = st.session_state.auth.user
-    user_campaigns_list = get_campaigns_by_user(user)
+
+    user_campaigns_list = get_all_campaigns()
     st.session_state.table_data = []
     for campaign in user_campaigns_list:
         Campaign_name = campaign.name
@@ -38,23 +38,25 @@ def render():
         date = campaign.date
         public = "✅" if campaign.public == "True" else "❌"
         validated = "✅" if campaign.validated == "True" else "❌"
-        st.session_state.table_data.append((Campaign_name, description, date, public, validated))
+        usuario = campaign.user_id
+        st.session_state.table_data.append((Campaign_name, description, date, public, validated, usuario))
 
     if st.session_state.table_data:
         df = pd.DataFrame(
             st.session_state.table_data,
-            columns=["name", "description", "date", "public", "validated"],
+            columns=["name", "description", "date", "public", "validated","user_id"],
         )
         st.dataframe(
             data=df,
             hide_index=True,
-            column_order=["name", "description", "date", "public", "validated"],
+            column_order=["name", "description", "date", "public", "validated","user_id"],
             column_config={
                 "name": st.column_config.TextColumn(label="Name"),
                 "description": st.column_config.TextColumn(label="Description"),
                 "date": st.column_config.TextColumn(label="Date"),
                 "public": st.column_config.TextColumn(label="Public"),
                 "validated": st.column_config.TextColumn(label="Validated"),
+                "user_id": st.column_config.TextColumn(label="User ID"),
             },
         )
 
@@ -62,16 +64,19 @@ def render():
             label="Select the item for edit",
             options=user_campaigns_list,
             index=None,
-            format_func=lambda x: x.name
+            format_func=lambda x: f"{x.name} - {x.user_id}"
         )
 
+
         if selected_campaign:
+            user = selected_campaign.user_id
             escolha = sac.segmented(
                 items=[
                     sac.SegmentedItem(label="Edit Header"),
+                    sac.SegmentedItem(label="Edit Info"),
                     sac.SegmentedItem(label="Data Quality"),
                     sac.SegmentedItem(label="Delete"),
-                    sac.SegmentedItem(label="Edit Info"),
+                    sac.SegmentedItem(label="Export")
                 ], )
 
             if (escolha=="Edit Header"):
@@ -224,6 +229,7 @@ def render():
                                     with st.spinner("Please wait..."):
                                         sleep(2)
                                         st.rerun()
+
             if(escolha == "Edit Info"):
                 with st.form(key="edit_campaign_form"):
                     st.write("### 📝 Campaign Information")
@@ -248,14 +254,27 @@ def render():
                     )
 
                     st.divider()
-                    st.write("### 🔒 Visibility  Settings")
-                    # Público
-                    current_public = selected_campaign.public == "True"
-                    new_public = st.checkbox(
-                        "Public Campaign",
-                        value=current_public,
-                        help="Determines whether the campaign will be publicly visible."
-                    )
+                    st.write("### 🔒 Visibility and Validation Settings")
+
+                    col1, col2 = st.columns(2)
+
+                    with col1:
+                        # Público
+                        current_public = selected_campaign.public == "True"
+                        new_public = st.checkbox(
+                            "Public Campaign",
+                            value=current_public,
+                            help="Determines whether the campaign will be publicly visible."
+                        )
+
+                    with col2:
+                        # Validada
+                        current_validated = selected_campaign.validated == "True"
+                        new_validated = st.checkbox(
+                            "Validated Campaign",
+                            value=current_validated,
+                            help="Determines whether the campaign has been approved by the curator."
+                        )
 
                     st.divider()
 
@@ -272,6 +291,9 @@ def render():
                     if new_public != current_public:
                         status_public = "✅ Public" if new_public else "❌ Private"
                         changes.append(f"• **Visibility:** {status_public}")
+                    if new_validated != current_validated:
+                        status_validated = "✅ Validated" if new_validated else "❌ Not Validated"
+                        changes.append(f"• **Validation:** {status_validated}")
 
                     if changes:
                         st.warning("**Changes detected:**")
@@ -306,6 +328,7 @@ def render():
                                 'description': new_description,
                                 'date': new_date,
                                 'public': "True" if new_public else "False",
+                                'validated': "True" if new_validated else "False"
                             }
 
                             # Atualizar no banco
@@ -331,3 +354,54 @@ def render():
                         st.write(f"**User ID:** `{selected_campaign.user_id}`")
                         st.write(f"**Collection ID:** `{selected_campaign.collection_id}`")
                         st.write(f"**Campaign ID:** `{selected_campaign.id}`")
+
+            if(escolha =="Export"):
+                st.subheader("📊 Export to Jupyter Notebook")
+                st.write(f"**Selected Campaign:** {selected_campaign.name}")
+                st.write(f"**Owner:** {user}")
+
+                st.info("🔬 This feature exports campaign data as a .parquet file and generates ready-to-use code for Jupyter Notebook analysis.")
+
+                if st.button("🚀 Generate Export", type="primary"):
+                    with st.spinner("Exporting data to .parquet..."):
+                        filepath, filename = export_campaign_to_parquet(user, selected_campaign)
+
+                        if filepath and filename:
+                            st.success("✅ Data exported successfully!")
+
+                            # URL base do servidor
+                            base_url = "http://localhost:8501"
+                            jupyter_code = generate_jupyter_code(base_url, filename, selected_campaign.name)
+
+                            st.divider()
+                            st.subheader("📝 Generated Jupyter Notebook")
+                            st.write("Download the .ipynb file to use in Jupyter Notebook or Google Colab:")
+
+                            st.download_button(
+                                label="📥 Download Notebook (.ipynb)",
+                                data=jupyter_code,
+                                file_name=f"analise_{selected_campaign.name}.ipynb",
+                                mime="application/x-ipynb+json",
+                                type="primary"
+                            )
+
+                            st.divider()
+
+                            st.info(f"""
+                            **📍 Generated Parquet File:**
+                            - **Local Path:** `{filepath}`
+                            - **URL:** `{base_url}/out/parquet/{filename}`
+                    
+                            **💡 How to use:**
+                            1. Click the button above to download the notebook
+                            2. Open the file in Jupyter Notebook or upload to Google Colab
+                            3. Run the cells sequentially
+                            4. Start your analysis!
+                        
+                            **🌐 To use in Google Colab:**
+                            - Access: https://colab.research.google.com/
+                            - Upload the downloaded .ipynb file
+                            - Run the cells!
+                            """)
+                        else:
+                            st.error("❌ Error exporting data. Check logs.")

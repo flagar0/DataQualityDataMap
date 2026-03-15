@@ -9,6 +9,7 @@ class Auth:
         self.token = None
         self.token_expire_datetime = None
         self.public = False
+        self.cargo = None # None = Publico por padrao
 
 
 def init():

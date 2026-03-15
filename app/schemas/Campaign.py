@@ -16,6 +16,8 @@ class Campaign(Document):
     dtf: datetime
     user_id: str
     collection_id: str
+    public: str
+    validated: str
 
     # class Settings:
     #     name = "products"
