@@ -499,6 +499,10 @@ def update_campaign_info(campaign_id, updated_data):
             update_fields['public'] = updated_data['public']
         if 'validated' in updated_data:
             update_fields['validated'] = updated_data['validated']
+        if 'doi' in updated_data:
+            update_fields['doi'] = updated_data['doi']
+        if 'location' in updated_data:
+            update_fields['location'] = updated_data['location']
 
         # Atualizar usando update_one do pymongo diretamente
         db = client.info

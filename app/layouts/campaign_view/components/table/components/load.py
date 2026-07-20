@@ -13,10 +13,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from streamlit_timeline import st_timeline
 from config.functions import *
-# from typing import Optional
 from pygwalker.api.streamlit import StreamlitRenderer
-# from bunnet import Document
-
+import folium
+from streamlit_folium import st_folium, folium_static
 
 from time import sleep
 
@@ -41,25 +40,26 @@ def render():
 
     st.session_state.table_data = []
     for campaign in user_campaigns_list:
-        Campaign_name = campaign.name
-        description = campaign.description
-        date = campaign.date
-
-        st.session_state.table_data.append((Campaign_name, description, date))
+        try:
+            doi = campaign.doi or ""
+        except Exception:
+            doi = ""
+        st.session_state.table_data.append((campaign.name, campaign.description, campaign.date, doi))
 
     if st.session_state.table_data:
         df = pd.DataFrame(
             st.session_state.table_data,
-            columns=["name", "description", "date"],
+            columns=["name", "description", "date", "doi"],
         )
         st.dataframe(
             data=df,
             hide_index=True,
-            column_order=["name", "description", "date"],
+            column_order=["name", "description", "date", "doi"],
             column_config={
                 "name": st.column_config.TextColumn(label="Name"),
                 "description": st.column_config.TextColumn(label="Description"),
                 "date": st.column_config.TextColumn(label="Date"),
+                "doi": st.column_config.TextColumn(label="DOI"),
             },
         )
 
@@ -74,6 +74,7 @@ def render():
             items=[
                 sac.SegmentedItem(label="Data View"),
                 sac.SegmentedItem(label="Data Timeline"),
+                sac.SegmentedItem(label="Location"),
                 sac.SegmentedItem(label="Download"),
             ],
         )
@@ -201,6 +202,26 @@ def render():
                     )
 
 
+            elif (escolha == "Location"):
+                st.subheader("📍 Campaign Location")
+                try:
+                    loc = selected_campaign.location or ""
+                except Exception:
+                    loc = ""
+
+                if loc:
+                    try:
+                        parts = loc.replace(",", " ").split()
+                        lat, lon = float(parts[0]), float(parts[1])
+                        m = folium.Map(location=[lat, lon], zoom_start=8)
+                        folium.Marker([lat, lon], popup=str(selected_campaign.name)).add_to(m)
+                        folium_static(m, width=700, height=400)
+                        st.caption(f"Coordinates: {lat}, {lon}")
+                    except Exception as e:
+                        st.warning(f"⚠️ Map error: {e}")
+                else:
+                    st.info("ℹ️ No location set for this campaign.")
+
             elif (escolha == "Download"):
                 df_header = get_header(user, selected_campaign.collection_id)
 
@@ -232,6 +253,3 @@ def render():
                         file_name=f"{user}_{selected_campaign.name}.zip",
                         mime="application/zip",
                     )
-
-
-

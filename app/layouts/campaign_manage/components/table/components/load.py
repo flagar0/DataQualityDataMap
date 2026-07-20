@@ -136,25 +136,26 @@ def render():
 
     st.session_state.table_data = []
     for campaign in user_campaigns_list:
-        Campaign_name = campaign.name
-        description = campaign.description
-        date = campaign.date
-
-        st.session_state.table_data.append((Campaign_name, description, date))
+        try:
+            doi = campaign.doi or ""
+        except Exception:
+            doi = ""
+        st.session_state.table_data.append((campaign.name, campaign.description, campaign.date, doi))
 
     if st.session_state.table_data:
-        tables = pd.DataFrame(
+        df = pd.DataFrame(
             st.session_state.table_data,
-            columns=["name", "description", "date"],
+            columns=["name", "description", "date", "doi"],
         )
         st.dataframe(
-            data=tables,
+            data=df,
             hide_index=True,
-            column_order=["name", "description", "date"],
+            column_order=["name", "description", "date", "doi"],
             column_config={
                 "name": st.column_config.TextColumn(label="Name"),
                 "description": st.column_config.TextColumn(label="Description"),
                 "date": st.column_config.TextColumn(label="Date"),
+                "doi": st.column_config.TextColumn(label="DOI"),
             },
         )
 

@@ -18,6 +18,8 @@ class Campaign(Document):
     collection_id: str
     public: str
     validated: str
+    doi: Optional[str] = None
+    location: Optional[str] = None  # "lat,lon" ex: "-23.5505,-46.6333"
 
     # class Settings:
     #     name = "products"

@@ -26,10 +26,19 @@ def render():
         label="Campaign Description (Optional)",
     )
 
-    is_public = st.checkbox(
-        "Is a public campaign?",
-        key = "is_public_checkbox",
+    st.text_input(
+        key="campaign_doi_input",
+        label="DOI (Optional)",
+        placeholder="10.1234/example",
     )
+
+    st.text_input(
+        key="campaign_location_input",
+        label="Location (lat, lon) (Optional)",
+        placeholder="-23.5505,-46.6333",
+    )
+
+    st.checkbox("Is a public campaign?", key="is_public_checkbox")
     # st.date_input(
     #     key="campaign_dates_input",
     #     label="Select the period of data collection",

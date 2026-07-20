@@ -32,7 +32,9 @@ def insert():
         user_id=str(user),
         collection_id=collectionname + "_" + str(uuid.uuid4()),
         public = str(st.session_state['is_public_checkbox']),
-        validated = "False"
+        validated = "False", # falso por padrao
+        doi =str(st.session_state["campaign_doi_input"]),
+        location = str(st.session_state["campaign_location_input"])
 
     )
     # And can be inserted into the database
