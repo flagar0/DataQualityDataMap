@@ -8,3 +8,4 @@ font="monospace"
 enableXsrfProtection = false
 enableCORS = false
 port = 8080
+maxUploadSize = 500
