@@ -5,7 +5,8 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+.dockerignore
+Dockerfile
 # C extensions
 *.so
 
