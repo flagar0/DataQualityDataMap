@@ -13,6 +13,8 @@ from time import sleep
 from stqdm import stqdm
 from config.functions import *
 from streamlit_extras import stateful_button as stb
+import tempfile
+import os
 
 user_id = "a"
 
@@ -93,7 +95,7 @@ def generate_dataquality(df):
                     green.append({"start": str(old_time), "end": str(df['time'][i]), "style": "background-color: green;"})
 
                 if(isna[i+1]==True):
-                    if(first_red==None): first_red=df['t'][i]
+                    if(first_red==None): first_red=df['time'][i]
                 else:
                     if(first_red==None):
                         red.append({"start": str(df['time'][i]), "end": str(df['time'][i + 1]),"style": "background-color: red;"})
@@ -181,8 +183,33 @@ def render():
                 df = pd.concat((pd.read_csv(f, sep='\t') for f in uploaded_file), ignore_index=True)
 
             elif (uploaded_file[0].type == "application/x-netcdf" or uploaded_file[0].type == "application/vnd.wolfram.cdf" ):  # .cdf
-                variables = xarray.open_dataset(uploaded_file[0]).variables # pega as informacoes de cabecalho do primeiro
-                df = pd.concat((xarray.open_dataset(f).to_pandas() for f in uploaded_file))#, ignore_index=True)#xarray.open_dataset(uploaded_file).to_pandas()
+                dfs = []
+                for idx, f in enumerate(uploaded_file):
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=".cdf") as tmp:
+                        f.seek(0)
+                        tmp.write(f.read())
+                        tmp_path = tmp.name
+                    
+                    try:
+                        with xarray.open_dataset(tmp_path) as ds:
+                            if idx == 0:
+                                import collections
+                                class MockVar:
+                                    def __init__(self, attrs):
+                                        self.attrs = attrs
+                                class MockVariables:
+                                    def __init__(self, ds_variables):
+                                        self.mapping = collections.defaultdict(lambda: MockVar({}))
+                                        for k, v in ds_variables.items():
+                                            self.mapping[k] = MockVar(dict(v.attrs))
+                                variables = MockVariables(ds.variables)
+                            dfs.append(ds.to_pandas().reset_index())
+                    finally:
+                        try:
+                            os.unlink(tmp_path)
+                        except Exception as e:
+                            print(f"Não foi possível deletar tmp: {e}")
+                df = pd.concat(dfs, ignore_index=True)
 
         if st.session_state.data_quality == [] and df is not None :
             try:
